@@ -1,0 +1,206 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../app-layout/app-header/app-header.html">
+<link rel="import" href="../app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<script src="../pouchdb/dist/pouchdb.js"></script>
+
+<dom-module id="tangy-page">
+  <template>
+    <app-header reveals>
+      <app-toolbar>
+        <paper-icon-button title="settings" id="settinsButton" on-click="openSettings" icon="settings"></paper-icon-button>
+        <paper-icon-button icon="home" onclick="window.location = '/'"></paper-icon-button>
+        <div main-title></div>
+        <paper-icon-button title="add a new page" id="newPageButton" on-click="newPage" icon="add"></paper-icon-button>
+        <paper-icon-button title="create new form" id="newFormButton" on-click="newForm" icon="content-paste"></paper-icon-button>
+        <paper-icon-button title="turn off edit mode" id="viewButton" on-click="view" icon="visibility" disabled></paper-icon-button>
+        <paper-icon-button title="edit the page" id="editButton" on-click="edit" icon="create"></paper-icon-button>
+        <paper-icon-button title="save the page" id="saveButton" on-click="save" icon="save"></paper-icon-button>
+      </app-toolbar>
+    </app-header>
+    <style>
+      #settings_iframe {
+        border: 0px;
+        width: 100%;
+        height: 700px;
+      }
+      :host {
+        display: block;
+      }
+      #content {
+        margin: 0 25px;
+      }
+    </style>
+    <iframe src="/tangerine/index.html" id="settings_iframe" width="100%" hidden></iframe>
+    <div id="content">
+      <slot></slot>
+    </div>
+  </template>
+
+  <script>
+    /**
+     * `tangy-page`
+     * 
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class TangyPage extends Polymer.Element {
+      static get is() { return 'tangy-page'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'tangy-page'
+          }
+        };
+      }
+      constructor() {
+        super()
+        this.selfArchive = ''
+        this.state = ''
+        this.editor = ''
+        this.templateTop = `
+          <!DOCTYPE html>
+            <html>
+            <head>
+              <link rel="import" href="bower_components/tangy-page/tangy-page.html">
+              <script src="bower_components/pouchdb/dist/pouchdb.js"> <\/script>
+              <script src="bower_components/ckeditor/ckeditor.js"> <\/script>
+              <style>
+                paper-card {
+                  margin: 15px 0px;
+                  padding: 25px;
+                }
+              </style>
+            </head>
+            <body>
+              <tangy-page>
+                <div id="editor">
+          `;
+        this.templateBottom = `
+            <\/div>
+          <\/tangy-page>
+        <\/body>
+        <\/html>
+        `;
+        this.formTemplateTop = `
+            <!DOCTYPE html>
+              <html>
+              <head>
+                <link rel="import" href="../bower_components/tangy-timed/tangy-timed.html">
+                <link rel="import" href="../bower_components/tangy-form/tangy-form.html">
+                <script src="../bower_components/pouchdb/dist/pouchdb.js"> <\/script>
+                <script src="../bower_components/ckeditor/ckeditor.js"> <\/script>
+                <style>
+                  paper-card {
+                    margin: 15px 0px;
+                    padding: 25px;
+                  }
+                </style>
+              </head>
+              <body>
+                <tangy-form id="{{FORM_NAME}}">
+                  <div id="editor">
+          `;
+        this.formTemplateBottom = `
+                <\/div>
+              <\/tangy-form>
+            <\/body>
+            <\/html>
+        `;
+      }
+
+      async ready() {
+        super.ready();
+        CKEDITOR.on('instanceReady', (ev) => {
+            this.editor = ev.editor;
+            // you can also add more config for this instance of CKE here
+            // e.g. editor.setReadOnly(false);
+        });
+        // Format the form name for app header.
+        // @TODO This should be done in a getter and from perhaps the filename? Or none at all?
+        this.pageName = 'page' 
+        // If there is a DatArchive API, enable editing, else hide editing UI.
+        if (window.hasOwnProperty('DatArchive')) {
+          this.selfArchive = new DatArchive('' + window.location)
+        } else {
+          this.$.editButton.style.display = 'none';
+          this.$.viewButton.style.display = 'none';
+        }
+      }
+
+      async openSettings() {
+          this.$.settings_iframe.hidden = !this.$.settings_iframe.hidden
+      }
+
+      async newPage() {
+        this.$.saveButton.disabled = true
+        this.$.newPageButton.disabled = true
+        this.$.newFormButton.disabled = true
+        this.$.editButton.disabled = true
+        let fileName = prompt('What should filename name be? Ex. about.html')
+        await this.selfArchive.writeFile(`/${fileName}`, this.templateTop + 
+          + 'Enter content here.'
+          + this.templateBottom, 'utf8')
+        await this.selfArchive.commit()
+        window.location = `${window.location.origin}/${fileName}` 
+      }
+
+      async newForm() {
+        this.$.saveButton.disabled = true
+        this.$.newPageButton.disabled = true
+        this.$.newFormButton.disabled = true
+        this.$.editButton.disabled = true
+        let formName = prompt('What should form name be? Ex. my-tangy-form')
+        // @TODO: Create a folder
+        await this.selfArchive.mkdir(`/${formName}`)
+        await this.selfArchive.writeFile(`/${formName}/index.html`, this.formTemplateTop.replace('{{FORM_NAME}}', formName) 
+          + `<form>
+              Enter content here.<br>
+              <br>
+              <br>
+              <input type="submit" value="submit">
+            </form>`
+          + this.formTemplateBottom, 'utf8')
+        await this.selfArchive.commit()
+        window.location = `${window.location.origin}/${formName}/index.html` 
+      }
+      async save() {
+        this.$.saveButton.disabled = true
+        let pathName = window.location.pathname
+        if (pathName == '/') pathName = '/index.html'
+        await this.selfArchive.writeFile(pathName, this.templateTop + (document.querySelector('#editor')).innerHTML + this.templateBottom, 'utf8')
+        await this.selfArchive.commit()
+        setTimeout(() => {
+          this.$.saveButton.disabled = false 
+        }, 1000)
+      }
+      
+      view() {
+        this.$.editButton.disabled = false;
+        this.$.saveButton.disabled = false;
+        this.$.viewButton.disabled = true;
+        (document.querySelector('#editor')).contentEditable = "false"
+        this.editor.destroy();
+      }
+      
+      edit() {
+        this.$.editButton.disabled = true;
+        this.$.saveButton.disabled = true;
+        this.$.viewButton.disabled = false;
+        (document.querySelector('#editor')).contentEditable = "true"
+        CKEDITOR.inline( 'editor' );
+      }
+
+    }
+
+    window.customElements.define(TangyPage.is, TangyPage);
+  </script>
+</dom-module>
