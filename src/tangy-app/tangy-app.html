@@ -1,0 +1,32 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="tangy-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]!</h2>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class TangyApp extends Polymer.Element {
+      static get is() { return 'tangy-app'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'tangy-app'
+          }
+        };
+      }
+    }
+
+    window.customElements.define(TangyApp.is, TangyApp);
+  </script>
+</dom-module>
