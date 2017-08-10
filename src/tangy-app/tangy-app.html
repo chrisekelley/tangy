@@ -43,9 +43,7 @@
         padding: 15px;
       }
     </style>
-    <div id="content">
-      <slot></slot>
-    </div>
+    <slot></slot>
   </template>
 
   <script>
@@ -69,35 +67,55 @@
         this.state = ''
         this.commitCounter = 0
         this.editor = ''
-        this.templateTop = `
-            <!DOCTYPE html>
-              <html>
-              <head>
-                <link rel="import" href="tangy-app/tangy-app.html">
-                <link rel="import" href="tangy-timed/tangy-timed.html">
-                <link rel="import" href="tangy-form/tangy-form.html">
-                <script src="bower_components/pouchdb/dist/pouchdb.js"> <\/script>
-                <script src="bower_components/ckeditor/ckeditor.js"> <\/script>
-              </head>
-              <body>
-                  <tangy-app>
+        this.defaultFormContent = `
+          <tangy-form id="{{FORM_NAME}}">
+            <div class='content'>
+            <form>
+              Enter form elements here.<br>
+              <br>
+              <br>
+              <input type="submit" value="submit">
+            </form>
+            </div>
+          </tangy-form>
+        `;
+        this.templateTop = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>tangy</title>
+    <meta name="description" content="tangy description">
+
+    <!-- See https://goo.gl/OOhYW5 -->
+    <link rel="manifest" href="/manifest.json">
+
+    <script src="/bower_components/webcomponentsjs/webcomponents-loader.js"><\/script>
+    <script src="/bower_components/pouchdb/dist/pouchdb.js"><\/script>
+    <script src="/bower_components/ckeditor/ckeditor.js"><\/script>
+
+
+    <link rel="import" href="/src/tangy-app/tangy-app.html">
+  <\/head>
+  <body>
+    <tangy-app><div id="content">
           `;
         this.templateBottom = `
-              <\/tangy-app>
-            <\/body>
-            <\/html>
+    <\/div>
+  <\/tangy-app>
+<\/body>
+<\/html>
         `;
       }
 
       async ready() {
         super.ready();
-        /*
         CKEDITOR.on('instanceReady', (ev) => {
             this.editor = ev.editor;
             // you can also add more config for this instance of CKE here
             // e.g. editor.setReadOnly(false);
         });
-        */
         // If there is a DatArchive API, enable editing, else hide editing UI.
         if (window.hasOwnProperty('DatArchive')) {
           this.selfArchive = new DatArchive('' + window.location)
@@ -117,12 +135,20 @@
         this.$.newFormButton.disabled = true
         this.$.editButton.disabled = true
         let fileName = prompt('What should filename name be? Ex. about.html')
-        await this.selfArchive.writeFile(`/${fileName}`, 
-          this.templateTop + 
-          + 'Enter content here.'
-          + this.templateBottom, 'utf8')
+        let templateContent = '<p>Enter content here.</p>'
+        let filePath = `/${fileName}`
+        // If in a form, make this a new form page.
+        let formName = (window.location.pathname).split('\/')[1]
+        if (formName.indexOf('form-') !== -1) {
+          filePath = `/${formName}/${fileName}`
+          templateContent = (this.defaultFormContent).replace('{{FORM_NAME}}', formName)
+        }
+        await this.selfArchive.writeFile(filePath, 
+          `${this.templateTop} 
+          ${templateContent} 
+          ${this.templateBottom}`, 'utf8')
         await this.selfArchive.commit()
-        window.location = `${window.location.origin}/${fileName}` 
+        window.location = `${window.location.origin}/${filePath}` 
       }
 
       async newForm() {
@@ -131,24 +157,29 @@
         this.$.newFormButton.disabled = true
         this.$.editButton.disabled = true
         let formName = prompt('What should form name be? Ex. my-tangy-form')
-        // @TODO: Create a folder
-        await this.selfArchive.mkdir(`/${formName}`)
-        await this.selfArchive.writeFile(`/${formName}/index.html`, this.formTemplateTop.replace('{{FORM_NAME}}', formName) 
-          + `<form>
-              Enter content here.<br>
+        await this.selfArchive.mkdir(`/form-${formName}`)
+        await this.selfArchive.writeFile(`/form-${formName}/index.html`,
+          (`${this.templateTop} 
+          <tangy-form id="{{FORM_NAME}}">
+            <div class='content'>
+            <form>
+              Enter form elements here.<br>
               <br>
               <br>
               <input type="submit" value="submit">
-            </form>`
-          + this.formTemplateBottom, 'utf8')
+            </form>
+            </div>
+          </tangy-form>
+          ${this.templateBottom}`).replace('{{FORM_NAME}}', formName) 
+          + this.templateBottom, 'utf8')
         await this.selfArchive.commit()
-        window.location = `${window.location.origin}/${formName}/index.html` 
+        window.location = `${window.location.origin}/form-${formName}/index.html` 
       }
       async save() {
         this.$.saveButton.disabled = true
         let pathName = window.location.pathname
         if (pathName == '/') pathName = '/index.html'
-        await this.selfArchive.writeFile(pathName, this.templateTop + (document.querySelector('#editor')).innerHTML + this.templateBottom, 'utf8')
+        await this.selfArchive.writeFile(pathName, this.templateTop + (document.querySelector('#content')).innerHTML + this.templateBottom, 'utf8')
         await this.selfArchive.commit()
         setTimeout(() => {
           this.$.saveButton.disabled = false 
@@ -159,7 +190,7 @@
         this.$.editButton.disabled = false;
         this.$.saveButton.disabled = false;
         this.$.viewButton.disabled = true;
-        (document.querySelector('#editor')).contentEditable = "false"
+        (document.querySelector('#content')).contentEditable = "false"
         this.editor.destroy();
       }
       
@@ -167,8 +198,8 @@
         this.$.editButton.disabled = true;
         this.$.saveButton.disabled = true;
         this.$.viewButton.disabled = false;
-        (document.querySelector('#editor')).contentEditable = "true"
-        CKEDITOR.inline( 'editor' );
+        (document.querySelector('#content')).contentEditable = "true"
+        CKEDITOR.inline( 'content' );
       }
 
     }
