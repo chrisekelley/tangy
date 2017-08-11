@@ -1,5 +1,9 @@
 # \<tangy\>
 
+## Sandbox setup
+- Step 0: Install prereqs of Bower components by running `bower install`.
+- Step 1: Create a site in Beaker Browser, call it `tangy-sandbox` so that it will end up living at `~/Sites/tangy-sandbox`. The build script depends on that path of the sandbox.
+- Step 2: Run `./build.sh` to try out your first build. You'll now see the site is no longer blank but has a bunch of files in it.
 
 
 ## Install the Polymer-CLI
