@@ -1,57 +1,18 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../../bower_components/app-layout/app-drawer/app-drawer.html">
-<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
-<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <script src="../../bower_components/pouchdb/dist/pouchdb.js"></script>
 
 <dom-module id="tangy-form">
+
   <template>
-    <app-header reveals>
-      <app-toolbar>
-        <paper-icon-button icon="menu" onclick="this.domHost.shadowRoot.querySelector('app-drawer').toggle()"></paper-icon-button>
-        <paper-icon-button icon="home" onclick="window.location = '/'"></paper-icon-button>
-        <div main-title>[[formName]]</div>
-        <paper-icon-button title="new form page" id="newFormPageButton" on-click="newFormPage" icon="add"></paper-icon-button>
-        <paper-icon-button title="turn off editing" id="viewButton" on-click="view" icon="visibility" disabled></paper-icon-button>
-        <paper-icon-button title="edit this form page" id="editButton" on-click="edit" icon="create"></paper-icon-button>
-        <paper-icon-button title="save this form page" id="saveButton" on-click="save" icon="save"></paper-icon-button>
-      </app-toolbar>
-    </app-header>
-    <app-drawer id="drawer" align="right" swipe-open>
-      <div id="drawer-content">
-        <paper-button on-click='generateCSV' raised>Download CSV</paper-button>
-        <paper-button on-click='newSession' raised>New Session</paper-button>
-        <template is="dom-repeat" items="{{sessions}}">
-          <ul>
-            <li> [[item.datetime]]  <paper-button id="[[item._id]]" on-click="resumeSession" raised>resume</paper-button> </li>
-          </ul>
-        </template>
-      </div>
-    </app-drawer>
-    <style>
-      :host {
-        display: block;
-      }
-      #content {
-        margin: 0 25px;
-      }
-      #drawer-content {
-        padding: 15px;
-      }
-    </style>
-    <div id="content">
       <slot></slot>
-    </div>
   </template>
 
   <script>
     /**
      * `tangy-form`
-     * An element used to encapsulate form elements for multipage forms with a session in localStorage
+     * An element used to encapsulate form elements for multipage forms with a response in PouchDB.
      *
      * @customElement
      * @polymer
@@ -59,209 +20,53 @@
      */
 
     class TangyForm extends Polymer.Element {
+
       static get is() { return 'tangy-form'; }
-      static get formName() { return this.id.replace('-', ' ' )}
-      static get properties() {
-        return {
-          formId: {
-            type: String,
-            value: 'tangy-form'
-          }
-        };
-      }
-      constructor() {
-        super()
-        this.selfArchive = ''
-        this.state = ''
-        this.commitCounter = 0
-        this.editor = ''
-        this.formTemplateTop = `
-            <!DOCTYPE html>
-              <html>
-              <head>
-                <link rel="import" href="../bower_components/tangy-timed/tangy-timed.html">
-                <link rel="import" href="../bower_components/tangy-form/tangy-form.html">
-                <script src="../bower_components/pouchdb/dist/pouchdb.js"> <\/script>
-                <script src="../bower_components/ckeditor/ckeditor.js"> <\/script>
-                <style>
-                  paper-card {
-                    margin: 15px 0px;
-                    padding: 25px;
-                  }
-                </style>
-              </head>
-              <body>
-                <tangy-form id="{{FORM_NAME}}">
-                  <div id="editor">
-          `;
-        this.formTemplateBottom = `
-                <\/div>
-              <\/tangy-form>
-            <\/body>
-            <\/html>
-        `;
-      }
 
       async ready() {
+
         super.ready();
-        CKEDITOR.on('instanceReady', (ev) => {
-            this.editor = ev.editor;
-            // you can also add more config for this instance of CKE here
-            // e.g. editor.setReadOnly(false);
-        });
-        // Format the form name for app header.
-        // @TODO This should be done in a getter.
+        this.db = new PouchDB('tangy-form-responses')
 
-        this.formName = this.id.replace(/-/g, ' ') 
-        this.folderName = (window.location.pathname.split('\/'))[1]
-        // Get all sessions that have the same formId for the sessions list in the sidebar.
-        // TODO: This should be in a tangy-form-session db.
-        // TODO: This should only get a couple of the most recent sessions.
-        // TODO: This should be moved to a tangy-form-sessions component.
-        this.db = new PouchDB('tangy-form')
-        let allDocs = (await this.db.allDocs({include_docs: true})).rows.map((row) => { return row.doc})
-        allDocs.sort(function (a, b) {
-          return b.unixtime - a.unixtime;
-        });
-        this.sessions = allDocs.filter((doc) => {
-          if (doc.type === 'tangy-form-session' && doc.formId == this.id) return doc
-        }) 
-        this.setupForm()
-        // If there is a DatArchive API, enable editing, else hide editing UI.
-        if (window.hasOwnProperty('DatArchive')) {
-          this.selfArchive = new DatArchive('' + window.location)
-          // TODO Get everything in the slot. Or the whole doc? Do we need state here or is this for live editing?
-          // state = (document.getElementById('pageContent')).outerHTML
-        } else {
-          debugger
-          this.$.editButton.style.display = 'none';
-          this.$.viewButton.style.display = 'none';
-        }
-      }
-
-      async newFormPage() {
-        this.$.saveButton.disabled = true
-        this.$.newFormPageButton.disabled = true
-        let page = (document.getElementById('editor')).outerHTML
-        let formName = (window.location.pathname).split('\/')[1]
-        let fileName = prompt('What should file name be? Ex. page-2.html')
-        if (fileName) {
-          await this.selfArchive.writeFile(`/${this.folderName}/${fileName}`, this.formTemplateTop.replace('{{FORM_NAME}}', formName) 
-            + `<form>
-              Enter content here.<br>
-              <br>
-              <br>
-              <input type="submit" value="submit">
-              </form>`
-            + this.formTemplateBottom, 'utf8')
-          await this.selfArchive.commit()
-          window.location = `${window.location.origin}/${this.folderName}/${fileName}` 
-        } else {
-          this.$.saveButton.disabled = false 
-          this.$.newFormPageButton.disabled = false 
-        }
-      }
-
-      async save() {
-        this.$.saveButton.disabled = true
-        let page = (document.getElementById('editor')).innerHTML
-        let formName = (window.location.pathname).split('\/')[1]
-        let pathName = window.location.pathname
-        if (pathName == `/${formName}/`) pathName = `/${formName}/index.html`
-        await this.selfArchive.writeFile(pathName, this.formTemplateTop.replace('{{FORM_NAME}}', formName) + page + this.formTemplateBottom, 'utf8')
-        await this.selfArchive.commit()
-        setTimeout(() => {
-          this.$.saveButton.disabled = false 
-        }, 1000)
-      }
-      
-      async publish() {
-        let publishButton = document.querySelector('#publishButton');
-        publishButton.innerText = 'PUBLISHING...'
-        publishButton.disabled = true
-        await selfArchive.commit()
-        publishButton.innerText = 'PUBLISH'
-        publishButton.disabled = false
-      }
-
-      view() {
-        this.$.editButton.disabled = false;
-        this.$.saveButton.disabled = false;
-        this.$.viewButton.disabled = true;
-        (document.querySelector('#editor')).contentEditable = "false"
-        this.editor.destroy();
-      }
-      
-      edit() {
-        this.$.editButton.disabled = true;
-        this.$.saveButton.disabled = true;
-        this.$.viewButton.disabled = false;
-        (document.querySelector('#editor')).contentEditable = "true"
-        CKEDITOR.inline( 'editor' );
-      }
-
-      async newSession() {
-        // Create the new session.
-        const response = await this.db.post({
-          type: 'tangy-form-session',
-          formId: this.id,
-          datetime: (new Date()).toLocaleString(),
-          unixtime: Date.now()
-        })
-        // Get the session from the db.
-        this.session = await this.db.get(response.id)
-        // Save that as the current session.
-        this.currentSessionInfo.sessionId = this.session._id
-        await this.db.put(this.currentSessionInfo)
-        this.currentSessionInfo = this.db.get(this.currentSessionInfo._id)
-        window.location = window.location
-      }
-
-      async resumeSession(event) {
-        this.currentSessionInfo.sessionId = event.currentTarget.id
-        await this.db.put(this.currentSessionInfo)
-        window.location = window.location
-      }
-
-      async setupForm() { 
-        // Get our session, else catch and create a new session.
-        this.db = new PouchDB('tangy-form')
+        // Get the current tangy form response, else catch and create a new current response.
         try {
-          this.currentSessionInfo = await this.db.get(`current_session_info_${this.id}`);
-          this.session = await this.db.get(this.currentSessionInfo.sessionId)
+          this.currentTangyFormResponse = await this.db.get(`current_tangy_form_response_${this.id}`);
+          this.response = await this.db.get(this.currentTangyFormResponse.responseId)
         }
         catch(e) {
-          // Create a new session document.
+          // Create a new response document.
           const response = await this.db.post({
-            type: 'tangy-form-session',
+            type: 'tangy-form-response',
             formId: this.id,
             datetime: (new Date()).toLocaleString(),
             unixtime: Date.now()
           })
-          // Get the session from the db.
-          this.session = await this.db.get(response.id)
-          // Save that as the current session.
+          // Get the response from the db.
+          this.response = await this.db.get(response.id)
+          // Save that as the current response.
           // @TODO: Add sanitization to user inputs. No malicious code allowed!
           await this.db.put({
-            _id: `current_session_info_${this.id}`,
-            sessionId: this.session._id 
+            _id: `current_tangy_form_response_${this.id}`,
+            responseId: this.response._id 
           })
-          this.currentSessionInfo = await this.db.get(`current_session_info_${this.id}`)
+          this.currentTangyFormResponse = await this.db.get(`current_tangy_form_response_${this.id}`)
         }
-        // Load session into DOM
+
+        // Load response into DOM
         this.form = this.querySelector('form');
         for (const element of this.form.elements) {
-          if (this.session.hasOwnProperty(element.name)) {
+          if (this.response.hasOwnProperty(element.name)) {
             const change = new Event('change')
             if (element.type === 'checkbox') {
-              element.checked = this.session[element.name]
+              element.checked = this.response[element.name]
               this.form.dispatchEvent(new Event('change'), {bubbles: true})
             } else {
-              element.value = this.session[element.name]
+              element.value = this.response[element.name]
               this.form.dispatchEvent(new Event('change'), {bubbles: true})
             }
           } 
         }
+
         // Listen for a submit of the form.
         this.preparedForSubmit = false
         this.form.addEventListener('submit', async (event) => {
@@ -270,44 +75,20 @@
             for (const element of this.form.elements) {
               const change = new Event('change')
               if (element.type === 'checkbox') {
-                this.session[element.name] = element.checked
+                this.response[element.name] = element.checked
                 element.dispatchEvent(change, {bubbles: true})
               } else {
-                this.session[element.name] = element.value
+                this.response[element.name] = element.value
                 element.dispatchEvent(change, {bubbles: true})
               }
             }
-            await this.db.put(this.session);
+            await this.db.put(this.response);
             this.preparedForSubmit = true
             this.form.submit()
           }
         })
-      }
 
-      generateCSV() {
-        let blob = new Blob([], {type: 'application/csv;charset=utf-8;' });
-        // TODO: Scan for keys. Bonus points for doing it 100 sessions at a time.
-        for (let session of this.sessions) {
-          let row = []
-          // TODO: Loop through keys, assign empty values for nonmatching keys.
-          for (let property in session) {
-            row.push('"' + encodeURI(session[property]) + '"')
-          }
-          blob = new Blob([blob, row.join(',') + '\n'], { type: 'application/csv;charset=utf-8;' });
-        }
-        console.log('creating element');
-        const element = window.document.createElement('a');
-        element.setAttribute('href', URL.createObjectURL(blob));
-        element.setAttribute('download', this.id + '.csv');
-        console.log('appending to DOM');
-        element.style.display = 'none';
-        window.document.body.appendChild(element);
-        console.log('Triggering download.');
-        element.click();
-        console.log('Cleaning up.');
-        window.document.body.removeChild(element);
       }
-
     }
 
     window.customElements.define(TangyForm.is, TangyForm);
