@@ -1,12 +1,21 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../tangy-form-responses/tangy-form-responses.html">
 <script src="../../bower_components/pouchdb/dist/pouchdb.js"></script>
 
 <dom-module id="tangy-form">
 
   <template>
-      <slot></slot>
+      <paper-tabs selected="0">
+        <paper-tab id="tangy-form--show-questions">QUESTIONS</paper-tab>
+        <paper-tab id="tangy-form--show-responses">RESPONSES</paper-tab>
+      </paper-tabs>
+      <div id="tangy-form-questions">
+        <slot></slot>
+      </div>
+      <div id="tangy-form-responses" hidden>
+        <tangy-form-responses form_id="{{id}}"></tangy-form-responses>
+      </div>
   </template>
 
   <script>
@@ -22,11 +31,27 @@
     class TangyForm extends Polymer.Element {
 
       static get is() { return 'tangy-form'; }
-
+      static get properties() {
+        return {
+          id: {
+            type: String,
+            value: 'tangy-form'
+          }
+        };
+      }
       async ready() {
 
         super.ready();
         this.db = new PouchDB('tangy-form-responses')
+
+        this.$['tangy-form--show-questions'].addEventListener('click', (event) => {
+          this.$['tangy-form-questions'].hidden = false
+          this.$['tangy-form-responses'].hidden = true 
+        })
+        this.$['tangy-form--show-responses'].addEventListener('click', (event) => {
+          this.$['tangy-form-questions'].hidden = true 
+          this.$['tangy-form-responses'].hidden = false 
+        })
 
         // Get the current tangy form response, else catch and create a new current response.
         try {
@@ -37,7 +62,7 @@
           // Create a new response document.
           const response = await this.db.post({
             type: 'tangy-form-response',
-            formId: this.id,
+            form_id: this.id,
             datetime: (new Date()).toLocaleString(),
             unixtime: Date.now()
           })
