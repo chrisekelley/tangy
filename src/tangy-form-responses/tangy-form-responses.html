@@ -2,6 +2,7 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <script src="../../bower_components/pouchdb/dist/pouchdb.js"></script>
+<script src="../../bower_components/underscore/underscore-min.js"></script>
 
 <dom-module id="tangy-form-responses">
 
@@ -78,11 +79,18 @@
       generateCSV() {
         let blob = new Blob([], {type: 'application/csv;charset=utf-8;' });
         // TODO: Scan for keys. Bonus points for doing it 100 sessions at a time.
-        for (let session of this.sessions) {
+        // Get header row.
+        let keys = []
+        for (let response of this.responses) {
+          keys = _.uniq(keys.concat(Object.getOwnPropertyNames(response)))
+        }
+        // Get all data row.
+        blob = new Blob([blob, keys.join(',') + '\n'], { type: 'application/csv;charset=utf-8;' });
+        for (let response of this.responses) {
           let row = []
           // TODO: Loop through keys, assign empty values for nonmatching keys.
-          for (let property in session) {
-            row.push('"' + encodeURI(session[property]) + '"')
+          for (let property in response) {
+            row.push('"' + encodeURI(response[property]) + '"')
           }
           blob = new Blob([blob, row.join(',') + '\n'], { type: 'application/csv;charset=utf-8;' });
         }

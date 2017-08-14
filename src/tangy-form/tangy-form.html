@@ -44,6 +44,7 @@
         super.ready();
         this.db = new PouchDB('tangy-form-responses')
 
+        // Listen for showing/hiding the questions and responses tabs.
         this.$['tangy-form--show-questions'].addEventListener('click', (event) => {
           this.$['tangy-form-questions'].hidden = false
           this.$['tangy-form-responses'].hidden = true 
