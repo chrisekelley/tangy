@@ -89,8 +89,12 @@
         for (let response of this.responses) {
           let row = []
           // TODO: Loop through keys, assign empty values for nonmatching keys.
-          for (let property in response) {
-            row.push('"' + encodeURI(response[property]) + '"')
+          for (let key of keys) {
+            if (response.hasOwnProperty(key)) {
+              row.push('"' + encodeURI(response[key]) + '"')
+            } else {
+              row.push('""')
+            }
           }
           blob = new Blob([blob, row.join(',') + '\n'], { type: 'application/csv;charset=utf-8;' });
         }
