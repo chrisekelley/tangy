@@ -13,11 +13,13 @@
       <app-toolbar>
         <paper-icon-button icon="home" onclick="window.location = '/'"></paper-icon-button>
         <div main-title><!-- @TODO Should probably implement some page title system --></div>
-        <paper-icon-button title="new page" id="newPageButton" on-click="newPage" icon="add"></paper-icon-button>
-        <paper-icon-button title="new form page" id="newFormButton" on-click="newForm" icon="content-paste"></paper-icon-button>
-        <paper-icon-button title="turn off editing" id="viewButton" on-click="view" icon="visibility" disabled></paper-icon-button>
-        <paper-icon-button title="edit this form page" id="editButton" on-click="edit" icon="create"></paper-icon-button>
-        <paper-icon-button title="save this form page" id="saveButton" on-click="save" icon="save"></paper-icon-button>
+        <div id="editorButtons">
+          <paper-icon-button title="new page" id="newPageButton" on-click="newPage" icon="add"></paper-icon-button>
+          <paper-icon-button title="new form page" id="newFormButton" on-click="newForm" icon="content-paste"></paper-icon-button>
+          <paper-icon-button title="turn off editing" id="viewButton" on-click="view" icon="visibility" disabled></paper-icon-button>
+          <paper-icon-button title="edit this form page" id="editButton" on-click="edit" icon="create"></paper-icon-button>
+          <paper-icon-button title="save this form page" id="saveButton" on-click="save" icon="save"></paper-icon-button>
+        </div>
       </app-toolbar>
     </app-header>
     <style>
@@ -111,8 +113,7 @@
         if (window.hasOwnProperty('DatArchive')) {
           this.selfArchive = new DatArchive('' + window.location)
         } else {
-          this.$.editButton.style.display = 'none';
-          this.$.viewButton.style.display = 'none';
+          this.$.editorButtons.style.display = 'none';
         }
       }
 
