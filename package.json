@@ -1,0 +1,28 @@
+{
+  "name": "tangy",
+  "version": "1.0.0",
+  "description": "## Sandbox setup - Step 0: Install prereqs of Bower components by running `bower install`. - Step 1: Create a site in Beaker Browser, call it `tangy-sandbox` so that it will end up living at `~/Sites/tangy-sandbox`. The build script depends on that path of the sandbox. - Step 2: Run `./build.sh` to try out your first build. You'll now see the site is no longer blank but has a bunch of files in it.",
+  "main": "index.html",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "browser-sync": "^2.18.13"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "polymer test",
+    "dev": "polymer serve & npm run watch",
+    "watch": "browser-sync start --proxy localhost:8000 --files \"src/**/*.*, index.html, *.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tangerine-Community/tangy.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tangerine-Community/tangy/issues"
+  },
+  "homepage": "https://github.com/Tangerine-Community/tangy#readme"
+}
