@@ -1,0 +1,92 @@
+<link rel="import" href="/bower_components/polymer/polymer-element.html">
+
+<dom-module id="tangy-eftouch">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <div> [[statusmessage]] </div>
+    <slot></slot>
+  </template>
+
+  <script>
+    /**
+     * `tangy-timed`
+     * 
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class TangyEftouch extends Polymer.Element {
+      static get is() { return 'tangy-eftouch'; }
+      static get properties() {
+        return {
+          statusmessage: {
+            type: String,
+            value: 'Click start to begin'
+          },
+            display_sound_url: {
+            type: String,
+            value: 'hoot'
+          },
+            transition_sound_url: {
+            type: String,
+            value: 'hoot'
+          }
+        };
+      }
+
+      // Element class can define custom element reactions
+      // @TODO: Duplicating ready?
+      connectedCallback() {
+        super.connectedCallback();
+      }
+    
+      ready() {
+        super.ready();
+        this.status = this.statusmessage;
+        this.ds = this.display_sound_url;
+        this.ts = this.transition_sound_url;
+        console.log("display_sound_url: " + this.display_sound_url);
+        console.log("transition_sound_url: " + this.transition_sound_url);
+        if (this.transition_sound_url) {
+            this.transitionSound = new Audio(this.transition_sound_url);
+            this.transitionSound.play();
+        }
+        this.transitionSound.play();
+        if (this.display_sound_url) {
+            this.displaySound = new Audio(this.display_sound_url);
+            this.displaySound.load();
+        }
+
+
+          // @TODO: Need to listen to slot for ready.
+        setTimeout(() => this._prepareForm(), 200)
+      }
+
+        _prepareForm() {
+            // Find all our img elements.
+            this.imgElements = Array.prototype.slice.call(this.querySelectorAll('img'));
+            this.imgElements.forEach(element => {
+                element.addEventListener('click', (event) => {
+                this.imgElements.forEach(element => {
+                element.setAttribute('style', 'border: none;'); ;
+        });
+            const element = event.srcElement;
+            element.setAttribute('style', 'border: 1px solid blue;'); ;
+            const lastSelectedIdInputEl = this.querySelector('#foo');
+            lastSelectedIdInputEl.value = event.srcElement.id;
+            this.displaySound.play();
+            this.statusmessage = 'You may now proceed.';
+        });
+        });
+
+      }
+    }
+
+    window.customElements.define(TangyEftouch.is, TangyEftouch);
+  </script>
+</dom-module>
