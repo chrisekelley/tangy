@@ -1,32 +1,31 @@
 # \<tangy\>
 
-## Sandbox setup
-- Step 0: Install prereqs of Bower components by running `bower install`.
-- Step 1: Create a site in Beaker Browser, call it `tangy-sandbox` so that it will end up living at `~/Sites/tangy-sandbox`. The build script depends on that path of the sandbox.
-- Step 2: Run `./build.sh` to try out your first build. You'll now see the site is no longer blank but has a bunch of files in it.
+## Development setup
 
-
-## Install the Polymer-CLI
-
-First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. Then run `polymer serve` to serve your application locally.
-
-## Viewing Your Application
-
+OS level dependencies:
 ```
-$ polymer serve
+npm install -g bower
+npm intall -g polymer
 ```
 
-## Building Your Application
+Set up sandbox:
+```
+git clone git@github.com:tangerine-community/tangy
+cd tangy
+bower install
+polymer serve
+```
 
-```
-$ polymer build
-```
+## Development setup for working on Editor functions
+If you need to test any part of the application that uses the editor functions, you have two options that you may choose depending on what you need to test. If you just need to test CKEditor's abilities, turn off hiding of the `editorButtons` in `TangyApp.ready()`. Then you may click edit/view as you please. If you want the save/new page/new form buttons to work, you'll need to get the site into Beaker as a Dat that it holds the private key for. 
 
-This will create builds of your application in the `build/` directory, optimized to be served in production. You can then serve the built versions by giving `polymer serve` a folder to serve from:
 
-```
-$ polymer serve build/default
-```
+- Step 1: Create a site in Beaker Browser, call it `tangy-sandbox`.
+- Step 2: When viewing your new dat site in Beaker's library view at `beaker://library/<dat UUID>`, click the dropdown menu in the top right of the page, click "change folder" and then select the root folder of the tangy repository.
+- Step 3: Click `review changes`, then click `publish`. 
+- Step 4: Click on the `index.html` file to open the site. Now you have editing capabilites and any change you make it code will be reflected on that site. You can click the lightning bolt in the URL bar to turn on live reloading.
+
+WARNING: Remember that when you click save in the editor, it saves that files to disk. If you have made some edits to say index.html or any html directly, your changes may be overwritten with the template of the HTML files. Be sure to update the templates in `./src/tangy-app/tangy-app.html` found in the `TangyApp.templateTop` and `TangyApp.templateBottom`.
 
 ## Running Tests
 

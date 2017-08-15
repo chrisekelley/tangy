@@ -12,7 +12,7 @@
   "devDependencies": {},
   "scripts": {
     "test": "polymer test",
-    "dev": "polymer serve & npm run watch",
+    "start": "polymer serve & npm run watch",
     "watch": "browser-sync start --proxy localhost:8000 --files \"src/**/*.*, index.html, *.js\""
   },
   "repository": {

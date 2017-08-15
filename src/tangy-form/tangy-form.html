@@ -16,6 +16,12 @@
       <div id="tangy-form-responses" hidden>
         <tangy-form-responses form_id="{{id}}"></tangy-form-responses>
       </div>
+      <style>
+        #tangy-form-responses, #tangy-form-questions {
+          margin 15px;
+          padding: 15px;
+        }
+      </style>
   </template>
 
   <script>
@@ -78,7 +84,11 @@
           this.currentTangyFormResponse = await this.db.get(`current_tangy_form_response_${this.id}`)
         }
 
+        //
         // Load response into DOM
+        //
+
+        // Standard form input elements.
         this.form = this.querySelector('form');
         for (const element of this.form.elements) {
           if (this.response.hasOwnProperty(element.name)) {
@@ -91,6 +101,13 @@
               this.form.dispatchEvent(new Event('change'), {bubbles: true})
             }
           } 
+        }
+
+        // Paper elements.
+        for (let element of this.querySelectorAll('paper-input')) {
+          if (this.response.hasOwnProperty(element.getAttribute('name'))) {
+            element.value = this.response[element.name]
+          }
         }
 
         // Listen for a submit of the form.
@@ -107,6 +124,9 @@
                 this.response[element.name] = element.value
                 element.dispatchEvent(change, {bubbles: true})
               }
+            }
+            for (let element of this.querySelectorAll('paper-input')) {
+              this.response[element.name] = element.value
             }
             await this.db.put(this.response);
             this.preparedForSubmit = true
