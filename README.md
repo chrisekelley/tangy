@@ -13,12 +13,14 @@ Set up sandbox:
 git clone git@github.com:tangerine-community/tangy
 cd tangy
 bower install
-polymer serve
+npm install
+npm start
 ```
 
-## Development setup for working on Editor functions
-If you need to test any part of the application that uses the editor functions, you have two options that you may choose depending on what you need to test. If you just need to test CKEditor's abilities, turn off hiding of the `editorButtons` in `TangyApp.ready()`. Then you may click edit/view as you please. If you want the save/new page/new form buttons to work, you'll need to get the site into Beaker as a Dat that it holds the private key for. 
 
+
+## Development setup for working on Editor functions
+If you want the save/new page/new form buttons to work, you'll need to get the site into Beaker as a Dat that it holds the private key for. 
 
 - Step 1: Create a site in Beaker Browser, call it `tangy-sandbox`.
 - Step 2: When viewing your new dat site in Beaker's library view at `beaker://library/<dat UUID>`, click the dropdown menu in the top right of the page, click "change folder" and then select the root folder of the tangy repository.
