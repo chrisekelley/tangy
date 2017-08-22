@@ -4,6 +4,8 @@ Welcome to Tangy. Here are some examples of using Tangy tags.
 
 ## tangy-eftouch
 
+include `<link rel="import" href="/src/tangy-eftouch/tangy-eftouch.html">` in index.html.
+
 ```
 <form method="get">
     <tangy-eftouch statusMessage="Select an new picture." display_sound_url="src/tangy-eftouch/assets/swish.mp3" transition_sound_url="src/tangy-eftouch/assets/pop.mp3">

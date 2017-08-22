@@ -20,6 +20,7 @@
      * @polymer
      * @demo demo/index.html
      */
+
     class TangyEftouch extends Polymer.Element {
       static get is() { return 'tangy-eftouch'; }
       static get properties() {
@@ -38,6 +39,7 @@
           }
         };
       }
+
 
       // Element class can define custom element reactions
       // @TODO: Duplicating ready?
@@ -68,24 +70,46 @@
       }
 
         _prepareForm() {
+
             // Find all our img elements.
             this.imgElements = Array.prototype.slice.call(this.querySelectorAll('img'));
             this.imgElements.forEach(element => {
                 element.addEventListener('click', (event) => {
                 this.imgElements.forEach(element => {
-                element.setAttribute('style', 'border: none;'); ;
+//                element.setAttribute('style', 'border: none;'); ;
+//                TangyUtils.removeClass(element, 'eftouch-selected');
+                var ele = element;
+                var cls = 'eftouch-selected';
+                var hasClass = !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'))
+                if (hasClass) {
+                    var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
+                    ele.className=ele.className.replace(reg,' ');
+                }
+
+
+
         });
             const element = event.srcElement;
-            element.setAttribute('style', 'border: 1px solid blue;'); ;
-            const lastSelectedIdInputEl = this.querySelector('#foo');
-            lastSelectedIdInputEl.value = event.srcElement.id;
+//            element.setAttribute('style', 'border: 10px solid #af0; border-radius: 10px;'); ;
+            var ele = element;
+            var cls = 'eftouch-selected';
+            var hasClass = !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'))
+            if (!hasClass) ele.className += " "+cls;
+
+            const inputEl = this.querySelector('#foo');
+            if (inputEl !== null) {
+                inputEl.value = event.srcElement.id;
+            }
             this.displaySound.play();
-            this.statusmessage = 'You may now proceed.';
+//            this.statusmessage = 'You may now proceed.';
         });
         });
 
       }
+
+
     }
+
 
     window.customElements.define(TangyEftouch.is, TangyEftouch);
   </script>
