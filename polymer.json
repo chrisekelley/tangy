@@ -1,7 +1,42 @@
 {
+  "entrypoint": "index.html",
   "lint": {
     "rules": [
       "polymer-2"
     ]
-  }
+  },
+  "sources": [
+    "bower.json"
+  ],
+  "extraDependencies": [
+    "src/**/*",
+    "index.css",
+    "manifest.json",
+    "assets/**/*",
+    "fonts/**/*",
+    "form-form1/**/*",
+    "form-ef2/**/*",
+    "form-ef3/**/*",
+    "form-ef4/**/*",
+    "form-ef5/**/*",
+    "form-ef6/**/*",
+    "form-ef7/**/*",
+    "form-ef8/**/*",
+    "form-ef9/**/*",
+    "form-ef10/**/*",
+    "form-ef11/**/*",
+    "form-ef12/**/*",
+    "bower_components/**/*"
+  ],
+  "build": [{
+    "name": "bundled-custom",
+    "bundle": {
+      "stripComments": "true",
+      "inlineCss": "false",
+      "sourcemaps": "true"
+    },
+    "js": {"minify": true, "compile": true},
+    "css": {"minify": true},
+    "html": {"minify": true}
+  }]
 }
